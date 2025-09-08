@@ -87,7 +87,7 @@ def logout():
 
 # 👤 Cadastro de usuário
 @app.route('/cadastrar_usuario', methods=['GET', 'POST'])
-@login_required
+##@login_required
 def cadastrar_usuario():
     if request.method == 'POST':
         username = request.form.get('username')
