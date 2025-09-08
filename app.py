@@ -24,7 +24,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'chave_super_secreta_123')
 
 # 📦 Configuração do banco de dados PostgreSQL
-db_url = 'postgresql://db_sistemacondomtech_user:zNWlXqjmTU8fP3yMrU0Upm7t8pmyF9HN@dpg-d2vinaruibrs738lafg0-a/db_sistemacondomtech'
+db_url = 'postgresql://db_sistemacondomtech_user:zNWlXqjmTU8fP3yMrU0Upm7t8pmyF9HN@dpg-d2vinaruibrs738lafg0-a.oregon-postgres.render.com/db_sistemacondomtech'
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
