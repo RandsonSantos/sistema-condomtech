@@ -8,32 +8,34 @@ from models import Empresa, Servico, Usuario, db, Cliente, Produto, OrdemServico
 from xhtml2pdf import pisa
 from io import BytesIO
 
-app = Flask(__name__)
-
-app = Flask(__name__)
-
-# 🔐 Configuração segura
-app.secret_key = os.getenv('SECRET_KEY', 'chave_super_secreta_123')
-
-# 📦 Configuração do banco de dados
 import os
-
-# Corrige prefixo se necessário
-db_url = os.getenv('DATABASE_URL', 'sqlite:///orcamento.db')
-if db_url.startswith('postgres://'):
-    db_url = db_url.replace('postgres://', 'postgresql://', 1)
-
-# Ou define diretamente a URL do Render
-db_url = 'postgresql://db_sistemacondomtech_user:zNWlXqjmTU8fP3yMrU0Upm7t8pmyF9HN@dpg-d2vinaruibrs738lafg0-a/db_sistemacondomtech'
-
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-Session(app)
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_session import Session
 from flask_migrate import Migrate
 
-migrate = Migrate(app, db)
+# 🔧 Inicializa SQLAlchemy
+db = SQLAlchemy()
 
+# 🚀 Inicializa Flask
+app = Flask(__name__)
+
+# 🔐 Chave secreta
+app.secret_key = os.getenv('SECRET_KEY', 'chave_super_secreta_123')
+
+# 📦 Configuração do banco de dados PostgreSQL
+db_url = 'postgresql://db_sistemacondomtech_user:zNWlXqjmTU8fP3yMrU0Upm7t8pmyF9HN@dpg-d2vinaruibrs738lafg0-a/db_sistemacondomtech'
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# 🗂️ Configuração de sessão
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
+Session(app)
+
+# 🔄 Migrações
 db.init_app(app)
+migrate = Migrate(app, db)
 
 with app.app_context():
     db.create_all()
