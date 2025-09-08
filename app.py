@@ -16,13 +16,18 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'chave_super_secreta_123')
 
 # 📦 Configuração do banco de dados
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL',
-    'sqlite:///orcamento.db'  # valor padrão se DATABASE_URL não estiver definido
-)
+import os
 
+# Corrige prefixo se necessário
+db_url = os.getenv('DATABASE_URL', 'sqlite:///orcamento.db')
+if db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+
+# Ou define diretamente a URL do Render
+db_url = 'postgresql://db_sistemacondomtech_user:zNWlXqjmTU8fP3yMrU0Upm7t8pmyF9HN@dpg-d2vinaruibrs738lafg0-a/db_sistemacondomtech'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 from flask_migrate import Migrate
 
