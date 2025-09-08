@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}Nova O.S.{% endblock %}
+
+{% block content %}
+<h2>Nova Ordem de Serviço</h2>
+
+<form method="POST" action="{{ url_for('nova_os') }}">
+  {% if cliente %}
+    <input type="hidden" name="cliente" value="{{ cliente.id }}">
+    <p><strong>Cliente:</strong> {{ cliente.nome }}</p>
+  {% else %}
+    <div class="position-relative mb-3">
+      <input type="text" class="form-control cliente-busca" placeholder="Digite o nome do cliente..." autocomplete="off" required>
+      <input type="hidden" name="cliente" class="cliente-id">
+      <ul class="list-group sugestoes-clientes" style="position: absolute; z-index: 1000;"></ul>
+    </div>
+  {% endif %}
+
+  <div id="itens">
+    <div class="d-flex gap-2 mb-2 item-linha position-relative">
+      <input type="text" class="form-control produto-busca" placeholder="Produto ou serviço..." autocomplete="off" required>
+      <input type="hidden" name="produto[]" class="produto-id">
+      <input type="number" name="quantidade[]" class="form-control quantidade" placeholder="Qtd" min="1" required>
+      <button type="button" class="btn btn-outline-danger" onclick="removerItem(this)">−</button>
+    </div>
+  </div>
+
+  <button type="button" class="btn btn-outline-secondary mb-3" onclick="adicionarItem()">+ Item</button>
+
+  <input type="number" name="desconto" id="desconto" class="form-control mb-3" placeholder="Desconto (R$)" step="0.01" min="0" value="0">
+
+  <textarea name="observacoes" class="form-control mb-3" rows="2" placeholder="Observações"></textarea>
+
+  <div class="text-end mb-3">
+    <strong>Total: R$ <span id="total">0.00</span></strong>
+  </div>
+
+  <button type="submit" class="btn btn-success">Salvar</button>
+</form>
+
+<script>
+  const produtos = [
+    {% for p in produtos %}
+      { id: {{ p.id }}, nome: "{{ p.nome }}", preco: {{ '%.2f'|format(p.preco) }} },
+    {% endfor %}
+  ];
+
+  const clientes = [
+    {% for c in clientes %}
+      { id: {{ c.id }}, nome: "{{ c.nome }}" },
+    {% endfor %}
+  ];
+
+  function adicionarItem() {
+    const container = document.getElementById('itens');
+    const novo = container.querySelector('.item-linha').cloneNode(true);
+    novo.querySelector('.produto-busca').value = '';
+    novo.querySelector('.produto-id').value = '';
+    novo.querySelector('.quantidade').value = '';
+    container.appendChild(novo);
+    atualizarTotal();
+  }
+
+  function removerItem(btn) {
+    const linha = btn.closest('.item-linha');
+    linha.remove();
+    atualizarTotal();
+  }
+
+  function atualizarTotal() {
+    let total = 0;
+    document.querySelectorAll('.item-linha').forEach(item => {
+      const nome = item.querySelector('.produto-busca').value;
+      const qtd = parseInt(item.querySelector('.quantidade').value);
+      const produto = produtos.find(p => p.nome === nome);
+      if (produto && !isNaN(qtd)) {
+        total += produto.preco * qtd;
+      }
+    });
+    const desconto = parseFloat(document.getElementById('desconto').value) || 0;
+    document.getElementById('total').textContent = (total - desconto).toFixed(2);
+  }
+
+  document.addEventListener('input', atualizarTotal);
+  document.addEventListener('change', atualizarTotal);
+
+  document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('produto-busca')) {
+      const input = e.target;
+      const termo = input.value.toLowerCase();
+      const resultados = produtos.filter(p => p.nome.toLowerCase().includes(termo)).slice(0, 5);
+
+      let lista = input.parentNode.querySelector('.sugestoes');
+      if (lista) lista.remove();
+
+      if (resultados.length > 0) {
+        lista = document.createElement('ul');
+        lista.className = 'list-group sugestoes';
+        lista.style.position = 'absolute';
+        lista.style.zIndex = '1000';
+        lista.style.width = input.offsetWidth + 'px';
+        lista.style.top = input.offsetTop + input.offsetHeight + 'px';
+        lista.style.left = input.offsetLeft + 'px';
+
+        resultados.forEach(p => {
+          const item = document.createElement('li');
+          item.className = 'list-group-item list-group-item-action';
+          item.textContent = `${p.nome} - R$ ${p.preco.toFixed(2)}`;
+          item.onclick = () => {
+            input.value = p.nome;
+            input.closest('.item-linha').querySelector('.produto-id').value = p.id;
+            lista.remove();
+            atualizarTotal();
+          };
+          lista.appendChild(item);
+        });
+
+        input.parentNode.appendChild(lista);
+      }
+    }
+
+    if (e.target.classList.contains('cliente-busca')) {
+      const input = e.target;
+      const termo = input.value.toLowerCase();
+      const resultados = clientes.filter(c => c.nome.toLowerCase().includes(termo)).slice(0, 5);
+
+      let lista = input.parentNode.querySelector('.sugestoes-clientes');
+      if (lista) lista.remove();
+
+      if (resultados.length > 0) {
+        lista = document.createElement('ul');
+        lista.className = 'list-group sugestoes-clientes';
+        lista.style.position = 'absolute';
+        lista.style.zIndex = '1000';
+        lista.style.width = input.offsetWidth + 'px';
+        lista.style.top = input.offsetTop + input.offsetHeight + 'px';
+        lista.style.left = input.offsetLeft + 'px';
+
+        resultados.forEach(c => {
+          const item = document.createElement('li');
+          item.className = 'list-group-item list-group-item-action';
+          item.textContent = c.nome;
+          item.onclick = () => {
+            input.value = c.nome;
+            input.parentNode.querySelector('.cliente-id').value = c.id;
+            lista.remove();
+          };
+          lista.appendChild(item);
+        });
+
+        input.parentNode.appendChild(lista);
+      }
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    document.querySelectorAll('.sugestoes').forEach(s => s.remove());
+    document.querySelectorAll('.sugestoes-clientes').forEach(s => s.remove());
+  });
+</script>
+{% endblock %}
