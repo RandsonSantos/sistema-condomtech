@@ -111,13 +111,13 @@ def cadastrar_usuario():
     return render_template('cadastrar_usuario.html')
 
 @app.route('/usuarios')
-@login_required
+##@login_required
 def listar_usuarios():
     usuarios = Usuario.query.all()
     return render_template('usuarios.html', usuarios=usuarios)
 
 @app.route('/usuario/editar/<int:usuario_id>', methods=['GET', 'POST'])
-@login_required
+##@login_required
 def editar_usuario(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
     if request.method == 'POST':
