@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Buscar Ordens de Serviço{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">🔍 Resultado da Busca de O.S.</h2>
+
+<form method="GET" action="{{ url_for('buscar_ordens') }}" class="mb-4">
+  <div class="row g-2">
+    <div class="col-md-4">
+      <input type="text" name="busca" class="form-control" placeholder="Buscar por cliente ou data..." value="{{ termo }}">
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">Todos os Status</option>
+        {% for s in ['Aberta', 'Em andamento', 'Finalizada', 'Cancelada', 'Pago'] %}
+          <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-outline-primary w-100">Buscar</button>
+      {% if termo or status or mes %}
+        <a href="{{ url_for('buscar_ordens') }}" class="btn btn-outline-secondary w-100">Limpar</a>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+{% if termo or status or mes %}
+  <p class="mt-2">Exibindo resultados para:
+    {% if termo %}<strong>{{ termo }}</strong>{% endif %}
+    {% if termo and (status or mes) %} e {% endif %}
+    {% if status %}<strong>Status: {{ status }}</strong>{% endif %}
+    {% if status and mes %} e {% endif %}
+    {% if mes %}<strong>Mês: {{ mes|string.zfill(2) }}</strong>{% endif %}
+  </p>
+{% endif %}
+
+{% if ordens %}
+  <table class="table table-sm table-bordered mt-3">
+    <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Data</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for os in ordens %}
+      <tr>
+        <td>#{{ os.id }}</td>
+        <td>{{ os.cliente.nome }}</td>
+        <td>{{ os.data_criacao.strftime('%d/%m/%Y') }}</td>
+        <td>{{ os.status }}</td>
+        <td>
+          <a href="{{ url_for('visualizar_os', os_id=os.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if paginadas.has_next %}
+    <div class="text-center mt-3">
+      <a href="{{ url_for('buscar_ordens', busca=termo, status=status, mes=mes, page=paginadas.next_num) }}" class="btn btn-outline-primary">
+        Ver mais →
+      </a>
+    </div>
+  {% endif %}
+{% else %}
+  <div class="alert alert-warning mt-3">⚠️ Nenhuma ordem encontrada com os filtros informados.</div>
+{% endif %}
+
+<a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-4">← Voltar ao Dashboard</a>
+{% endblock %}

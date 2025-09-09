@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>O.S. #{{ os.id }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      color: #333;
+      margin: 10px;
+    }
+
+    .header, .footer {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .logo-container {
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+.logo {
+  height: 60px;
+}
+
+    .empresa {
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .contato {
+      font-size: 10px;
+      color: #555;
+    }
+
+    .section-title {
+      font-weight: bold;
+      font-size: 11px;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 2px;
+    }
+
+    .info, .box {
+      font-size: 10px;
+      margin-bottom: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 5px;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      font-size: 11px;
+      word-wrap: break-word;
+    }
+
+    th.produto, td.produto {
+      width: 30%;
+    }
+
+    th.descricao, td.descricao {
+      width: 35%;
+    }
+
+    th.qtd, td.qtd {
+      width: 10%;
+      text-align: center;
+    }
+
+    th.unitario, td.unitario,
+    th.subtotal, td.subtotal {
+      width: 12.5%;
+      text-align: right;
+    }
+
+    .totais {
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .totais td {
+      border: none;
+      padding: 4px;
+      font-size: 10px;
+      text-align: right;
+    }
+
+    .assinatura {
+      margin-top: 20px;
+      font-size: 10px;
+    }
+
+    .footer {
+      font-size: 9px;
+      color: #666;
+      border-top: 1px solid #ccc;
+      padding-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="{{ url_for('static', filename='logo1.png', _external=True) }}" alt="logo" class="logo">
+    <div class="empresa">{{ empresa.nome }}</div>
+    <div class="contato">
+      {{ empresa.endereco }} — Tel: {{ empresa.telefone }} — Email: {{ empresa.email }}<br>
+      CNPJ: {{ empresa.cnpj }} — Site: {{ empresa.site }}
+    </div>
+  </div>
+
+  <div class="section-title">Cliente</div>
+  <div class="info">
+    {{ os.cliente.nome }} — {{ os.cliente.cidade or '---' }} — Tel: {{ os.cliente.telefone or '---' }}<br>
+    CPF/CNPJ: {{ os.cliente.cpf_cnpj or '---' }} — Email: {{ os.cliente.email or '---' }}
+  </div>
+
+  <div class="section-title">Orçamento Nº {{ os.id }}</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="produto">Produto</th>
+        <th class="descricao">Descrição</th>
+        <th class="qtd">Qtd</th>
+        <th class="unitario">Unitário</th>
+        <th class="subtotal">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in os.itens_os %}
+      <tr>
+        <td class="produto">{{ item.produto.nome }}</td>
+        <td class="descricao">{{ item.produto.descricao }}</td>
+        <td class="qtd">{{ item.quantidade }}</td>
+        <td class="unitario">R$ {{ '%.2f'|format(item.produto.preco) }}</td>
+        <td class="subtotal">R$ {{ '%.2f'|format(item.quantidade * item.produto.preco) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="totais">
+    <tr><td><strong>Subtotal:</strong> R$ {{ '%.2f'|format(subtotal) }}</td></tr>
+    <tr><td><strong>Desconto:</strong> R$ {{ '%.2f'|format(os.desconto or 0) }}</td></tr>
+    <tr><td><strong>Total:</strong> R$ {{ '%.2f'|format(total) }}</td></tr>
+  </table>
+
+  <div class="section-title">Observações</div>
+  <div class="box">{{ os.observacoes or 'Nenhuma observação registrada.' }}</div>
+
+  <div class="section-title">Pagamento</div>
+  <div class="box">{{ os.forma_pagamento or 'Pix, boleto, cartão de crédito ou débito' }}</div>
+
+  <div class="assinatura">
+    <strong>Assinatura:</strong> ____________________________________________
+  </div>
+
+  <div class="footer">
+    Orçamento válido por 15 dias a partir de {{ os.data_criacao.strftime('%d/%m/%Y') }}. Valores sujeitos a alteração após esse período.
+  </div>
+
+</body>
+</html>

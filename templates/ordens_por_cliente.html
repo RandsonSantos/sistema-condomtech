@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Ordens de Serviço de {{ cliente.nome }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">📄 Ordens de Serviço de {{ cliente.nome }}</h2>
+
+{% if lista_os %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-dark text-center">
+        <tr>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Observações</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in lista_os %}
+        <tr>
+          <td>#{{ item.os.id }}</td>
+          <td>{{ item.os.status }}</td>
+          <td>R$ {{ '%.2f'|format(item.total) }}</td>
+          <td>{{ item.os.observacoes or '—' }}</td>
+          <td class="text-center">
+            <a href="{{ url_for('visualizar_os', os_id=item.os.id) }}" class="btn btn-sm btn-outline-primary" title="Visualizar">
+              <i class="bi bi-eye"></i>
+            </a>
+            <a href="{{ url_for('gerar_pdf', os_id=item.os.id) }}" class="btn btn-sm btn-outline-success" title="Gerar PDF" target="_blank">
+              <i class="bi bi-file-earmark-pdf"></i>
+            </a>
+            <a href="{{ url_for('editar_os', os_id=item.os.id) }}" class="btn btn-sm btn-outline-warning" title="Editar">
+              <i class="bi bi-pencil-square"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-warning text-center">
+    ⚠️ Este cliente ainda não possui ordens de serviço cadastradas.
+  </div>
+{% endif %}
+
+<a href="{{ url_for('listar_clientes') }}" class="btn btn-outline-secondary mt-3">
+  ← Voltar para Clientes
+</a>
+{% endblock %}
