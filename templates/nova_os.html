@@ -2,56 +2,41 @@
 {% block title %}Nova O.S.{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <h2 class="mb-4 text-success">📝 Nova Ordem de Serviço</h2>
+<h2>Nova Ordem de Serviço</h2>
 
-  <form method="POST" action="{{ url_for('nova_os') }}">
-    {% if cliente %}
-      <input type="hidden" name="cliente" value="{{ cliente.id }}">
-      <div class="mb-3">
-        <label class="form-label"><strong>Cliente:</strong></label>
-        <p class="form-control-plaintext">{{ cliente.nome }}</p>
-      </div>
-    {% else %}
-      <div class="mb-3 position-relative">
-        <label for="clienteBusca" class="form-label">Cliente</label>
-        <input type="text" id="clienteBusca" class="form-control cliente-busca" placeholder="Digite o nome do cliente..." autocomplete="off" required>
-        <input type="hidden" name="cliente" class="cliente-id">
-        <ul class="list-group sugestoes-clientes"></ul>
-      </div>
-    {% endif %}
-
-    <label class="form-label">Itens</label>
-    <div id="itens">
-      <div class="d-flex gap-2 mb-2 item-linha position-relative">
-        <input type="text" class="form-control produto-busca" placeholder="Produto ou serviço..." autocomplete="off" required>
-        <input type="hidden" name="produto[]" class="produto-id">
-        <input type="number" name="quantidade[]" class="form-control quantidade" placeholder="Qtd" min="1" required>
-        <button type="button" class="btn btn-outline-danger" onclick="removerItem(this)">−</button>
-      </div>
+<form method="POST" action="{{ url_for('nova_os') }}">
+  {% if cliente %}
+    <input type="hidden" name="cliente" value="{{ cliente.id }}">
+    <p><strong>Cliente:</strong> {{ cliente.nome }}</p>
+  {% else %}
+    <div class="position-relative mb-3">
+      <input type="text" class="form-control cliente-busca" placeholder="Digite o nome do cliente..." autocomplete="off" required>
+      <input type="hidden" name="cliente" class="cliente-id">
+      <ul class="list-group sugestoes-clientes" style="position: absolute; z-index: 1000;"></ul>
     </div>
+  {% endif %}
 
-    <button type="button" class="btn btn-outline-secondary mb-3" onclick="adicionarItem()">+ Adicionar Item</button>
-
-    <div class="mb-3">
-      <label for="desconto" class="form-label">Desconto (R$)</label>
-      <input type="number" name="desconto" id="desconto" class="form-control" step="0.01" min="0" value="0" autocomplete="off">
+  <div id="itens">
+    <div class="d-flex gap-2 mb-2 item-linha position-relative">
+      <input type="text" class="form-control produto-busca" placeholder="Produto ou serviço..." autocomplete="off" required>
+      <input type="hidden" name="produto[]" class="produto-id">
+      <input type="number" name="quantidade[]" class="form-control quantidade" placeholder="Qtd" min="1" required>
+      <button type="button" class="btn btn-outline-danger" onclick="removerItem(this)">−</button>
     </div>
+  </div>
 
-    <div class="mb-3">
-      <label for="observacoes" class="form-label">Observações</label>
-      <textarea name="observacoes" id="observacoes" class="form-control" rows="2" placeholder="Observações adicionais..."></textarea>
-    </div>
+  <button type="button" class="btn btn-outline-secondary mb-3" onclick="adicionarItem()">+ Item</button>
 
-    <div class="text-end mb-3">
-      <strong>Total: <span class="text-success">R$ <span id="total">0.00</span></span></strong>
-    </div>
+  <input type="number" name="desconto" id="desconto" class="form-control mb-3" placeholder="Desconto (R$)" step="0.01" min="0" value="0">
 
-    <div class="d-grid">
-      <button type="submit" class="btn btn-success">💾 Salvar Ordem</button>
-    </div>
-  </form>
-</div>
+  <textarea name="observacoes" class="form-control mb-3" rows="2" placeholder="Observações"></textarea>
+
+  <div class="text-end mb-3">
+    <strong>Total: R$ <span id="total">0.00</span></strong>
+  </div>
+
+  <button type="submit" class="btn btn-success">Salvar</button>
+</form>
 
 <script>
   const produtos = [
@@ -114,6 +99,8 @@
         lista.style.position = 'absolute';
         lista.style.zIndex = '1000';
         lista.style.width = input.offsetWidth + 'px';
+        lista.style.top = input.offsetTop + input.offsetHeight + 'px';
+        lista.style.left = input.offsetLeft + 'px';
 
         resultados.forEach(p => {
           const item = document.createElement('li');
@@ -121,16 +108,9 @@
           item.textContent = `${p.nome} - R$ ${p.preco.toFixed(2)}`;
           item.onclick = () => {
             input.value = p.nome;
-            const linha = input.closest('.item-linha');
-            linha.querySelector('.produto-id').value = p.id;
+            input.closest('.item-linha').querySelector('.produto-id').value = p.id;
             lista.remove();
             atualizarTotal();
-
-            const campoQtd = linha.querySelector('.quantidade');
-            if (campoQtd) {
-              campoQtd.focus();
-              campoQtd.select();
-            }
           };
           lista.appendChild(item);
         });
@@ -153,6 +133,8 @@
         lista.style.position = 'absolute';
         lista.style.zIndex = '1000';
         lista.style.width = input.offsetWidth + 'px';
+        lista.style.top = input.offsetTop + input.offsetHeight + 'px';
+        lista.style.left = input.offsetLeft + 'px';
 
         resultados.forEach(c => {
           const item = document.createElement('li');

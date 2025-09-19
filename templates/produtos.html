@@ -2,36 +2,7 @@
 {% block title %}Produtos Cadastrados{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">📦 Produtos Cadastrados</h2>
-
-<form method="GET" action="{{ url_for('listar_produtos') }}" class="mb-4">
-  <div class="row g-2">
-    <div class="col-md-6">
-      <input type="text" name="nome" class="form-control" placeholder="Buscar por nome..." value="{{ nome }}">
-    </div>
-    <div class="col-md-4">
-      <select name="tipo" class="form-select">
-        <option value="">Todos os Tipos</option>
-        <option value="Produto" {% if tipo == 'Produto' %}selected{% endif %}>Produto</option>
-        <option value="Serviço" {% if tipo == 'Serviço' %}selected{% endif %}>Serviço</option>
-      </select>
-    </div>
-    <div class="col-md-2 d-flex gap-2">
-      <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
-      {% if nome or tipo %}
-        <a href="{{ url_for('listar_produtos') }}" class="btn btn-outline-secondary w-100">Limpar</a>
-      {% endif %}
-    </div>
-  </div>
-</form>
-
-{% if nome or tipo %}
-  <p class="mt-2">Exibindo resultados para:
-    {% if nome %}<strong>{{ nome }}</strong>{% endif %}
-    {% if nome and tipo %} e {% endif %}
-    {% if tipo %}<strong>Tipo: {{ tipo }}</strong>{% endif %}
-  </p>
-{% endif %}
+<h2 class="mb-4">Produtos Cadastrados</h2>
 
 {% if produtos %}
   <table class="table table-hover table-bordered">
@@ -50,15 +21,19 @@
         <td>{{ produto.descricao }}</td>
         <td>R$ {{ '%.2f'|format(produto.preco) }}</td>
         <td class="d-flex gap-2">
-          <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn btn-sm btn-outline-warning">Editar</a>
-          <a href="{{ url_for('nova_os') }}" class="btn btn-sm btn-outline-primary">Usar em O.S.</a>
+          <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn btn-sm btn-outline-warning">
+            Editar
+          </a>
+          <a href="{{ url_for('nova_os') }}" class="btn btn-sm btn-outline-primary">
+            Usar em O.S.
+          </a>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 {% else %}
-  <div class="alert alert-warning">Nenhum produto encontrado com os filtros informados.</div>
+  <div class="alert alert-warning">Nenhum produto cadastrado ainda.</div>
 {% endif %}
 
 <div class="mt-4 d-flex justify-content-between">

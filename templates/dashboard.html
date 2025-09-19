@@ -5,7 +5,7 @@
 <h2 class="mb-4">Painel de Controle</h2>
 
 <div class="row text-center mb-4">
-  <div class="col-md-3 mb-3">
+  <div class="col-md-3">
     <div class="card shadow-sm">
       <div class="card-body">
         <h6>Total de O.S.</h6>
@@ -13,7 +13,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md-3 mb-3">
+  <div class="col-md-3">
     <div class="card shadow-sm">
       <div class="card-body">
         <h6>Clientes</h6>
@@ -21,33 +21,33 @@
       </div>
     </div>
   </div>
-  <div class="col-md-3 mb-3">
+  <div class="col-md-3">
     <div class="card shadow-sm">
       <div class="card-body">
         <h6>Valor Total</h6>
-        <h4>{{ valor_total|moeda }}</h4>
+        <h4>R$ {{ '%.2f'|format(valor_total) }}</h4>
       </div>
     </div>
   </div>
 </div>
 
 <div class="row text-center mb-4">
-  <div class="col-md-4 mb-3">
+  <div class="col-md-4">
     <a href="{{ url_for('listar_ordens_por_status', status='Aberta') }}" class="text-decoration-none text-dark">
       <div class="card border-success shadow-sm">
         <div class="card-body">
           <h6>Ordens Abertas</h6>
-          <h4>{{ valor_aberto|moeda }}</h4>
+          <h4>R$ {{ '%.2f'|format(valor_aberto) }}</h4>
         </div>
       </div>
     </a>
   </div>
-  <div class="col-md-4 mb-3">
+  <div class="col-md-4">
     <a href="{{ url_for('listar_ordens_por_status', status='Pago') }}" class="text-decoration-none text-dark">
       <div class="card border-primary shadow-sm">
         <div class="card-body">
           <h6>Ordens Pagas</h6>
-          <h4>{{ valor_pago|moeda }}</h4>
+          <h4>R$ {{ '%.2f'|format(valor_pago) }}</h4>
         </div>
       </div>
     </a>
@@ -61,7 +61,6 @@
   </div>
 </form>
 
-
 <h4 class="mt-4">Últimas Ordens do Mês</h4>
 {% if ultimas_ordens %}
   <table class="table table-sm table-bordered">
@@ -70,7 +69,8 @@
         <th>ID</th>
         <th>Cliente</th>
         <th>Data</th>
-        <th class="text-center">Ações</th>
+        <th>Status</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -79,16 +79,9 @@
         <td>#{{ os.id }}</td>
         <td>{{ os.cliente.nome }}</td>
         <td>{{ os.data_criacao.strftime('%d/%m/%Y') }}</td>
-        <td class="text-center">
-          <a href="{{ url_for('visualizar_os', os_id=os.id) }}" class="btn btn-sm btn-outline-primary" title="Visualizar">
-            <i class="bi bi-eye"></i>
-          </a>
-          <a href="{{ url_for('gerar_pdf', os_id=os.id) }}" class="btn btn-sm btn-outline-success" title="Gerar PDF" target="_blank">
-            <i class="bi bi-file-earmark-pdf"></i>
-          </a>
-          <a href="{{ url_for('editar_os', os_id=os.id) }}" class="btn btn-sm btn-outline-warning" title="Editar">
-            <i class="bi bi-pencil-square"></i>
-          </a>
+        <td>{{ os.status }}</td>
+        <td>
+          <a href="{{ url_for('visualizar_os', os_id=os.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
         </td>
       </tr>
       {% endfor %}

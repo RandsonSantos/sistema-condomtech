@@ -1,46 +1,37 @@
 from datetime import datetime
-from functools import wraps
-from io import BytesIO
 import os
-
-from flask import (
-    Flask, flash, render_template, request, redirect,
-    url_for, make_response, session
-)
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, flash, render_template, request, redirect, url_for, make_response, session
 from flask_session import Session
-from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from models import Empresa, Servico, Usuario, db, Cliente, Produto, OrdemServico, ItemOS
 from xhtml2pdf import pisa
+from io import BytesIO
 
-# ✅ Importa o db corretamente do models.py
-from models import db  # db já foi instanciado lá
-
-# 🚀 Inicializa o app Flask
 app = Flask(__name__)
 
-# 🔐 Chave secreta segura
+app = Flask(__name__)
+
+# 🔐 Configuração segura
 app.secret_key = os.getenv('SECRET_KEY', 'chave_super_secreta_123')
 
-# 🌐 Configuração do banco de dados
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://db_siscondomtech_uyjv_user:rvikfkFZcDGXUj9cOw25X2e3603MW3vu@dpg-d2vo09vdiees738iur7g-a.oregon-postgres.render.com/db_siscondomtech_uyjv'  # ou use os.getenv('DATABASE_URL')
+# 📦 Configuração do banco de dados
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    'DATABASE_URL',
+    'sqlite:///orcamento.db'  # valor padrão se DATABASE_URL não estiver definido
+)
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# 🗂️ Configuração de sessão
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = False
 Session(app)
+from flask_migrate import Migrate
 
-# 🔄 Inicializa extensões
-db.init_app(app)
 migrate = Migrate(app, db)
 
-# ✅ Cria as tabelas se necessário
+db.init_app(app)
+
 with app.app_context():
     db.create_all()
-
-# 🧩 Importa modelos
-from models import Empresa, Servico, Usuario, Cliente, Produto, OrdemServico, ItemOS
 
 # 🔒 Decorador de login
 def login_required(f):
@@ -52,7 +43,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# 🏠 Rotas principais
+# 🏠 Home
 @app.route('/')
 @login_required
 def index():
@@ -147,26 +138,29 @@ def excluir_usuario(usuario_id):
 def cadastrar_cliente():
     if request.method == 'POST':
         nome = request.form.get('nome')
+        cpf_cnpj = request.form.get('cpf_cnpj')
         telefone = request.form.get('telefone')
         email = request.form.get('email')
-        cpf_cnpj = request.form.get('cpf_cnpj')
-        cidade = request.form.get('cidade')
 
         if not nome or not cpf_cnpj:
             flash("Nome e CPF/CNPJ são obrigatórios.", "danger")
             return redirect(url_for('cadastrar_cliente'))
 
+        cliente_existente = Cliente.query.filter_by(cpf_cnpj=cpf_cnpj).first()
+        if cliente_existente:
+            flash("Cliente já cadastrado com este CPF/CNPJ.", "warning")
+            return redirect(url_for('cadastrar_cliente'))
+
         novo_cliente = Cliente(
             nome=nome,
-            telefone=telefone,
-            email=email,
             cpf_cnpj=cpf_cnpj,
-            cidade=cidade
+            telefone=telefone,
+            email=email
         )
         db.session.add(novo_cliente)
         db.session.commit()
         flash("Cliente cadastrado com sucesso!", "success")
-        return redirect(url_for('listar_clientes'))
+        return redirect(url_for('listar_clientes'))  # Corrigido para rota existente
 
     return render_template('cadastrar_cliente.html')
 
@@ -192,18 +186,11 @@ def editar_cliente(cliente_id):
 def listar_clientes():
     termo = request.args.get('busca', '').strip()
     if termo:
-        clientes = Cliente.query.filter(
-            db.or_(
-                Cliente.nome.ilike(f'%{termo}%'),
-                Cliente.cpf_cnpj.ilike(f'%{termo}%'),
-                Cliente.email.ilike(f'%{termo}%')
-            )
-        ).order_by(Cliente.nome).all()
+        clientes = Cliente.query.filter(Cliente.nome.ilike(f'%{termo}%')).order_by(Cliente.nome).all()
     else:
         clientes = Cliente.query.order_by(Cliente.nome).all()
     return render_template('clientes.html', clientes=clientes)
 
-# 🔍 Ordens por cliente
 @app.route('/cliente/<int:cliente_id>/ordens')
 @login_required
 def ordens_por_cliente(cliente_id):
@@ -212,12 +199,11 @@ def ordens_por_cliente(cliente_id):
 
     lista_os = []
     for os in ordens:
-        total = sum(item.quantidade * item.produto.preco for item in os.itens_os if item.produto)
+        total = sum(item.quantidade * item.produto.preco for item in os.itens_os)
         lista_os.append({'os': os, 'total': total})
 
     return render_template('ordens_por_cliente.html', cliente=cliente, lista_os=lista_os)
 
-# ✏️ Editar Ordem de Serviço
 @app.route('/os/<int:os_id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_os(os_id):
@@ -227,14 +213,13 @@ def editar_os(os_id):
     if request.method == 'POST':
         try:
             os.data_criacao = datetime.strptime(request.form.get('data_criacao'), '%Y-%m-%d')
-        except (ValueError, TypeError):
+        except ValueError:
             flash("Data inválida.", "danger")
             return redirect(url_for('editar_os', os_id=os.id))
 
         os.status = request.form.get('status')
         os.desconto = float(request.form.get('desconto') or 0)
 
-        # Remover item
         excluir_id = request.form.get('excluir_item')
         if excluir_id:
             item = ItemOS.query.get(int(excluir_id))
@@ -244,13 +229,11 @@ def editar_os(os_id):
                 flash("Item removido com sucesso.", "info")
                 return redirect(url_for('editar_os', os_id=os.id))
 
-        # Atualizar quantidade
         for item in os.itens_os:
             qtd = request.form.get(f'quantidade_{item.id}')
             if qtd:
                 item.quantidade = int(qtd)
 
-        # Adicionar novo item
         if request.form.get('adicionar_item'):
             produto_id = request.form.get('novo_produto_id')
             quantidade = request.form.get('nova_quantidade')
@@ -270,7 +253,6 @@ def editar_os(os_id):
 
     return render_template('editar_os.html', os=os, produtos=produtos)
 
-# ➕ Nova OS para cliente específico
 @app.route('/nova_os/cliente/<int:cliente_id>', methods=['GET', 'POST'])
 @login_required
 def nova_os_para_cliente(cliente_id):
@@ -301,23 +283,12 @@ def nova_os_para_cliente(cliente_id):
 
     return render_template('nova_os.html', cliente=cliente, produtos=produtos)
 
-# 📦 Listar produtos
 @app.route('/produtos')
 @login_required
 def listar_produtos():
-    nome = request.args.get('nome', '').strip()
-    tipo = request.args.get('tipo', '').strip()
+    produtos = Produto.query.order_by(Produto.nome).all()
+    return render_template('produtos.html', produtos=produtos)
 
-    query = Produto.query
-    if nome:
-        query = query.filter(Produto.nome.ilike(f'%{nome}%'))
-    if tipo:
-        query = query.filter(Produto.tipo == tipo)
-
-    produtos = query.order_by(Produto.nome.asc()).all()
-    return render_template('produtos.html', produtos=produtos, nome=nome, tipo=tipo)
-
-# 🛒 Cadastrar produto
 @app.route('/cadastrar_produto', methods=['GET', 'POST'])
 @login_required
 def cadastrar_produto():
@@ -325,19 +296,12 @@ def cadastrar_produto():
         nome = request.form.get('nome')
         descricao = request.form.get('descricao')
         preco = request.form.get('preco')
-        tipo = request.form.get('tipo')
 
-        if not nome or not preco or not tipo:
-            flash("Nome, preço e tipo são obrigatórios.", "danger")
+        if not nome or not preco:
+            flash("Nome e preço são obrigatórios.", "danger")
             return redirect(url_for('cadastrar_produto'))
 
-        try:
-            preco_float = float(preco)
-        except ValueError:
-            flash("Preço inválido.", "danger")
-            return redirect(url_for('cadastrar_produto'))
-
-        novo_produto = Produto(nome=nome, descricao=descricao, preco=preco_float, tipo=tipo)
+        novo_produto = Produto(nome=nome, descricao=descricao, preco=float(preco))
         db.session.add(novo_produto)
         db.session.commit()
         flash("Produto cadastrado com sucesso!", "success")
@@ -345,7 +309,6 @@ def cadastrar_produto():
 
     return render_template('cadastrar_produto.html')
 
-# ✏️ Editar produto
 @app.route('/produto/<int:produto_id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_produto(produto_id):
@@ -360,14 +323,9 @@ def editar_produto(produto_id):
             flash("Nome e preço são obrigatórios.", "danger")
             return redirect(url_for('editar_produto', produto_id=produto.id))
 
-        try:
-            produto.preco = float(preco)
-        except ValueError:
-            flash("Preço inválido.", "danger")
-            return redirect(url_for('editar_produto', produto_id=produto.id))
-
         produto.nome = nome
         produto.descricao = descricao
+        produto.preco = float(preco)
 
         db.session.commit()
         flash("Produto atualizado com sucesso!", "success")
@@ -375,57 +333,54 @@ def editar_produto(produto_id):
 
     return render_template('editar_produto.html', produto=produto)
 
-# ➕ Nova OS geral
+
 @app.route('/nova_os', methods=['GET', 'POST'])
 @login_required
 def nova_os():
-    clientes = Cliente.query.order_by(Cliente.nome).all()
-    produtos = Produto.query.order_by(Produto.nome).all()
+    clientes = Cliente.query.all()
+    produtos = Produto.query.all()
 
     if request.method == 'POST':
         cliente_id = request.form.get('cliente')
-        produto_ids = request.form.getlist('produto[]')
-        quantidades = request.form.getlist('quantidade[]')
-        desconto = float(request.form.get('desconto') or 0)
         observacoes = request.form.get('observacoes')
+        desconto = request.form.get('desconto') or 0
 
-        if not cliente_id or not produto_ids or not quantidades:
-            flash("Preencha todos os campos obrigatórios.", "danger")
+        if not cliente_id:
+            flash("Cliente não selecionado.", "danger")
             return redirect(url_for('nova_os'))
 
-        os = OrdemServico(
+        nova_os = OrdemServico(
             cliente_id=cliente_id,
-            desconto=desconto,
             observacoes=observacoes,
-            status='Aberta'
+            desconto=float(desconto)
         )
-        db.session.add(os)
-        db.session.flush()  # Garante que os.id esteja disponível
+        db.session.add(nova_os)
+        db.session.commit()
 
-        for pid, qtd in zip(produto_ids, quantidades):
+        produtos_ids = request.form.getlist('produto[]')
+        quantidades = request.form.getlist('quantidade[]')
+
+        for pid, qtd in zip(produtos_ids, quantidades):
             if pid and qtd:
                 item = ItemOS(
-                    os_id=os.id,
+                    os_id=nova_os.id,
                     produto_id=int(pid),
                     quantidade=int(qtd)
                 )
                 db.session.add(item)
 
         db.session.commit()
-        flash("Ordem de Serviço criada com sucesso!", "success")
-        return redirect(url_for('visualizar_os', os_id=os.id))
+        flash("Ordem de serviço criada com sucesso!", "success")
+        return redirect(url_for('visualizar_os', os_id=nova_os.id))
 
-    cliente_id = request.args.get('cliente_id')
-    cliente = Cliente.query.get(cliente_id) if cliente_id else None
+    return render_template('nova_os.html', clientes=clientes, produtos=produtos)
 
-    return render_template('nova_os.html', clientes=clientes, produtos=produtos, cliente=cliente)
-
-# 👁️ Visualizar OS
+# 🔍 Visualizar Ordem de Serviço
 @app.route('/os/<int:os_id>')
 @login_required
 def visualizar_os(os_id):
     os = OrdemServico.query.get_or_404(os_id)
-    subtotal = sum(item.quantidade * item.produto.preco for item in os.itens_os if item.produto)
+    subtotal = sum(item.quantidade * item.produto.preco for item in os.itens_os)
     total = max(subtotal - (os.desconto or 0), 0)
     return render_template('visualizar_os.html', os=os, subtotal=subtotal, total=total)
 
@@ -437,7 +392,7 @@ def gerar_pdf(os_id):
         os = OrdemServico.query.get_or_404(os_id)
         empresa = Empresa.query.first()
 
-        subtotal = sum(item.quantidade * item.produto.preco for item in os.itens_os if item.produto)
+        subtotal = sum(item.quantidade * item.produto.preco for item in os.itens_os)
         total = max(subtotal - (os.desconto or 0), 0)
 
         html = render_template('os_pdf.html', os=os, subtotal=subtotal, total=total, empresa=empresa)
@@ -461,10 +416,7 @@ def gerar_pdf(os_id):
 # 💰 Filtro de moeda
 @app.template_filter('moeda')
 def moeda(valor):
-    try:
-        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    except (TypeError, ValueError):
-        return "R$ 0,00"
+    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 # 🕒 Contexto global com datetime
 @app.context_processor
@@ -504,7 +456,6 @@ def editar_empresa():
     if request.method == 'POST':
         if not empresa:
             empresa = Empresa()
-            db.session.add(empresa)
 
         empresa.nome = request.form.get('nome')
         empresa.endereco = request.form.get('endereco')
@@ -514,6 +465,7 @@ def editar_empresa():
         empresa.site = request.form.get('site')
         empresa.observacoes = request.form.get('observacoes')
 
+        db.session.add(empresa)
         db.session.commit()
         flash("Empresa atualizada com sucesso!", "success")
         return redirect(url_for('empresa'))
@@ -534,13 +486,9 @@ def dashboard():
 
     hoje = datetime.today()
     inicio_mes = datetime(hoje.year, hoje.month, 1)
-    ultimas_ordens = (
-        OrdemServico.query
-        .filter(OrdemServico.data_criacao >= inicio_mes)
-        .order_by(OrdemServico.data_criacao.desc())
-        .limit(4)  # ✅ agora pega só os 4 últimos
-        .all()
-    )
+    ultimas_ordens = OrdemServico.query.filter(
+        OrdemServico.data_criacao >= inicio_mes
+    ).order_by(OrdemServico.data_criacao.desc()).limit(10).all()
 
     return render_template(
         'dashboard.html',
@@ -559,12 +507,10 @@ def dashboard():
 def buscar_ordens():
     termo = request.args.get('busca', '').strip()
     status = request.args.get('status', '').strip()
-    mes = request.args.get('mes', '').strip()
-    page = request.args.get('page', 1, type=int)
 
     query = OrdemServico.query.join(Cliente)
-    filtros = []
 
+    filtros = []
     if termo:
         filtros.append(
             db.or_(
@@ -574,34 +520,19 @@ def buscar_ordens():
         )
     if status:
         filtros.append(OrdemServico.status == status)
-    if mes.isdigit() and 1 <= int(mes) <= 12:
-        filtros.append(db.extract('month', OrdemServico.data_criacao) == int(mes))
 
     if filtros:
         query = query.filter(*filtros)
 
-    paginadas = query.order_by(OrdemServico.data_criacao.desc()).paginate(page=page, per_page=10)
+    ordens = query.order_by(OrdemServico.data_criacao.desc()).all()
+    return render_template('buscar_ordens.html', ordens=ordens, termo=termo, status=status)
 
-    return render_template('buscar_ordens.html', ordens=paginadas.items, termo=termo, status=status, mes=mes, paginadas=paginadas)
-
-# 📋 Listar ordens por status
 @app.route('/ordens/<status>')
 @login_required
 def listar_ordens_por_status(status):
-    status_permitidos = ['Aberta', 'Em andamento', 'Finalizada', 'Cancelada', 'Pago']
-    
-    status_formatado = status.capitalize()
-    if status_formatado not in status_permitidos:
-        flash('Status inválido.', 'warning')
-        return redirect(url_for('dashboard'))
+    ordens = OrdemServico.query.filter_by(status=status.capitalize()).order_by(OrdemServico.data_criacao.desc()).all()
+    return render_template('lista_ordens.html', ordens=ordens, status=status)
 
-    ordens = OrdemServico.query.filter(OrdemServico.status.ilike(status_formatado))\
-        .order_by(OrdemServico.data_criacao.desc()).all()
-
-    return render_template('lista_ordens.html', ordens=ordens, status=status_formatado)
-
-# 🚀 Executa o servidor localmente
+# 🚀 Executa o servidor
 if __name__ == '__main__':
     app.run(debug=True)
-
-

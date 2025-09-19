@@ -18,11 +18,15 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('listar_clientes') }}">Ver Clientes</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('cadastrar_cliente') }}">Cadastrar Cliente</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('listar_produtos') }}">Produtos</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('listar_usuarios') }}">Usuários</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('empresa') }}">Empresa</a></li>
+
+
           {% if session.get('usuario_id') %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('listar_produtos') }}">Produtos</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('listar_usuarios') }}">Usuários</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('empresa') }}">Empresa</a></li>
             <li class="nav-item"><a class="nav-link text-warning" href="{{ url_for('logout') }}">Sair</a></li>
           {% else %}
             <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
