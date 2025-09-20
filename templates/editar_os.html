@@ -30,6 +30,11 @@
   </div>
 
   <div class="mb-3">
+    <label for="observacoes" class="form-label">Observações</label>
+    <textarea name="observacoes" id="observacoes" class="form-control" rows="3">{{ os.observacoes or '' }}</textarea>
+  </div>
+
+  <div class="mb-3">
     <label for="desconto" class="form-label">Desconto (R$)</label>
     <input type="number" step="0.01" name="desconto" id="desconto" class="form-control"
            value="{{ os.desconto or 0 }}">

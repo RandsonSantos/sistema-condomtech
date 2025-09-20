@@ -1,46 +1,106 @@
 {% extends 'base.html' %}
-
-{% block title %}Ordens de Serviço de {{ cliente.nome }}{% endblock %}
+{% block title %}Ordens de {{ cliente.nome }}{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Ordens de Serviço de {{ cliente.nome }}</h2>
+<div class="container py-4">
+  <h2 class="mb-4 text-primary">📄 Ordens de Serviço de <strong>{{ cliente.nome }}</strong></h2>
+  <form method="GET" class="row g-2 mb-4">
+    <div class="col-md-3">
+      <select name="mes" class="form-select">
+        <option value="">Todos os Meses</option>
+        {% for m in range(1, 13) %}
+          <option value="{{ m }}" {% if mes == m %}selected{% endif %}>{{ '%02d' % m }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">Todos os Status</option>
+        {% for s in ['Aberta', 'Em andamento', 'Finalizada', 'Cancelada', 'Pago'] %}
+          <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-grid">
+      <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+    </div>
+    {% if mes or status %}
+    <div class="col-md-3 d-grid">
+      <a href="{{ url_for('ordens_por_cliente', cliente_id=cliente.id) }}" class="btn btn-outline-secondary">Limpar</a>
+    </div>
+    {% endif %}
+  </form>
+  
+  {% if lista_os %}
+    <!-- Totais agregados -->
+    <div class="row mb-4 text-center">
+      <div class="col-md-4">
+        <div class="card border-info shadow-sm">
+          <div class="card-body">
+            <h6>Total Bruto</h6>
+            <h5>{{ lista_os | sum(attribute='total_bruto') | moeda }}</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-warning shadow-sm">
+          <div class="card-body">
+            <h6>Descontos Aplicados</h6>
+            <h5>{{ lista_os | sum(attribute='desconto') | moeda }}</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-success shadow-sm">
+          <div class="card-body">
+            <h6>Total com Desconto</h6>
+            <h5>{{ lista_os | sum(attribute='total') | moeda }}</h5>
+          </div>
+        </div>
+      </div>
+    </div>
 
-{% if lista_os %}
-  <table class="table table-bordered table-hover">
-    <thead class="table-dark">
-      <tr>
-        <th>ID</th>
-        <th>Data</th>
-        <th>Status</th>
-        <th>Total</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in lista_os %}
-      <tr>
-        <td>#{{ item.os.id }}</td>
-        <td>{{ item.os.data_criacao.strftime('%d/%m/%Y') }}</td>
-        <td>{{ item.os.status }}</td>
-        <td>R$ {{ '%.2f'|format(item.total) }}</td>
-        <td>
-          <a href="{{ url_for('visualizar_os', os_id=item.os.id) }}" class="btn btn-sm btn-outline-primary">
-            Visualizar
-          </a>
-          <a href="{{ url_for('gerar_pdf', os_id=item.os.id) }}" class="btn btn-sm btn-outline-success" target="_blank">
-            PDF
-          </a>
-          <a href="{{ url_for('editar_os', os_id=item.os.id) }}" class="btn btn-sm btn-outline-warning">
-            Editar
-          </a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <div class="alert alert-warning">Este cliente ainda não possui ordens de serviço cadastradas.</div>
-{% endif %}
+    <!-- Tabela de ordens -->
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light text-center">
+          <tr>
+            <th>ID</th>
+            <th>Data</th>
+            <th>Status</th>
+            <th>Total Bruto</th>
+            <th>Desconto</th>
+            <th>Total Final</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in lista_os %}
+          <tr>
+            <td>{{ item.os.id }}</td>
+            <td>{{ item.os.data_criacao.strftime('%d/%m/%Y') }}</td>
+            <td>{{ item.os.status }}</td>
+            <td>{{ item.total_bruto | moeda }}</td>
+            <td>{{ item.desconto | moeda }}</td>
+            <td>{{ item.total | moeda }}</td>
+            <td class="text-center">
+              <a href="{{ url_for('visualizar_os', os_id=item.os.id) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i> Ver
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-warning text-center">⚠️ Este cliente ainda não possui ordens de serviço.</div>
+  {% endif %}
 
-<a href="{{ url_for('listar_clientes') }}" class="btn btn-secondary mt-3">← Voltar para Clientes</a>
+  <div class="mt-4">
+    <a href="{{ url_for('listar_clientes') }}" class="btn btn-outline-secondary">
+      ⬅️ Voltar para Clientes
+    </a>
+  </div>
+</div>
 {% endblock %}

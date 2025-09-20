@@ -2,42 +2,120 @@
 {% block title %}Produtos Cadastrados{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Produtos Cadastrados</h2>
+<h2 class="mb-4">📦 Produtos Cadastrados</h2>
 
-{% if produtos %}
-  <table class="table table-hover table-bordered">
-    <thead class="table-dark">
-      <tr>
-        <th>Nome</th>
-        <th>Descrição</th>
-        <th>Preço</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for produto in produtos %}
-      <tr>
-        <td>{{ produto.nome }}</td>
-        <td>{{ produto.descricao }}</td>
-        <td>R$ {{ '%.2f'|format(produto.preco) }}</td>
-        <td class="d-flex gap-2">
-          <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn btn-sm btn-outline-warning">
-            Editar
-          </a>
-          <a href="{{ url_for('nova_os') }}" class="btn btn-sm btn-outline-primary">
-            Usar em O.S.
-          </a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <div class="alert alert-warning">Nenhum produto cadastrado ainda.</div>
+<!-- Filtro de busca -->
+<form method="GET" action="{{ url_for('listar_produtos') }}" class="mb-4">
+  <div class="row g-2">
+    <div class="col-md-6">
+      <input type="text" name="nome" class="form-control" placeholder="Buscar por nome..." value="{{ nome }}">
+    </div>
+    <div class="col-md-4">
+      <select name="tipo" class="form-select">
+        <option value="">Todos os Tipos</option>
+        <option value="produto" {% if tipo == 'produto' %}selected{% endif %}>Produto</option>
+        <option value="servico" {% if tipo == 'servico' %}selected{% endif %}>Serviço</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-outline-primary w-100">
+        <i class="bi bi-search"></i> Filtrar
+      </button>
+      {% if nome or tipo %}
+        <a href="{{ url_for('listar_produtos') }}" class="btn btn-outline-secondary w-100">
+          <i class="bi bi-x-circle"></i> Limpar
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+<!-- Ações -->
+<div class="mb-4 d-flex justify-content-between">
+  <a href="{{ url_for('cadastrar_produto') }}" class="btn btn-success">
+    <i class="bi bi-plus-lg"></i> Cadastrar Novo Produto
+  </a>
+</div>
+
+<!-- Feedback de filtros -->
+{% if nome or tipo %}
+  <p class="mt-2 text-muted">
+    <i class="bi bi-filter"></i> Filtros aplicados:
+    {% if nome %}<span class="badge bg-primary">{{ nome }}</span>{% endif %}
+    {% if tipo %}<span class="badge bg-secondary">{{ tipo|capitalize }}</span>{% endif %}
+  </p>
 {% endif %}
 
-<div class="mt-4 d-flex justify-content-between">
-  <a href="{{ url_for('cadastrar_produto') }}" class="btn btn-success">Cadastrar Novo Produto</a>
-  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Voltar ao Dashboard</a>
-</div>
+<!-- Tabela de produtos -->
+{% if produtos %}
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th class="text-nowrap">Preço</th>
+          <th class="text-nowrap">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for produto in produtos %}
+        <tr>
+          <td>{{ produto.nome }}</td>
+          <td>{{ produto.descricao }}</td>
+          <td>R$ {{ '%.2f'|format(produto.preco) }}</td>
+          <td class="d-flex gap-2">
+            <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn btn-sm btn-outline-warning">
+              <i class="bi bi-pencil-square"></i> Editar
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginação -->
+  {% if paginacao.pages > 1 %}
+  <nav aria-label="Navegação de páginas">
+    <ul class="pagination justify-content-center mt-4">
+      {% if paginacao.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('listar_produtos', page=paginacao.prev_num, nome=nome, tipo=tipo) }}">
+            &laquo; Anterior
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+      {% endif %}
+
+      {% for num in paginacao.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if num %}
+          {% if num == paginacao.page %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('listar_produtos', page=num, nome=nome, tipo=tipo) }}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+      {% endfor %}
+
+      {% if paginacao.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('listar_produtos', page=paginacao.next_num, nome=nome, tipo=tipo) }}">
+            Próxima &raquo;
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Próxima &raquo;</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+{% else %}
+  <div class="alert alert-warning">Nenhum produto encontrado com os filtros informados.</div>
+{% endif %}
 {% endblock %}

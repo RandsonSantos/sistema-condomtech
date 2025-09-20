@@ -9,22 +9,31 @@
 
     <form method="POST" action="{{ url_for('cadastrar_produto') }}">
       <div class="mb-3">
-        <label for="nome" class="form-label">Nome:</label>
+        <label for="tipo" class="form-label">Tipo</label>
+        <select name="tipo" id="tipo" class="form-select" required>
+          <option value="">Selecione...</option>
+          <option value="Produto">Produto</option>
+          <option value="Serviço">Serviço</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="nome" class="form-label">Nome</label>
         <input type="text" name="nome" id="nome" class="form-control" required>
       </div>
 
       <div class="mb-3">
-        <label for="descricao" class="form-label">Descrição:</label>
+        <label for="descricao" class="form-label">Descrição</label>
         <textarea name="descricao" id="descricao" class="form-control" rows="3"></textarea>
       </div>
 
       <div class="mb-3">
-        <label for="preco" class="form-label">Preço (R$):</label>
+        <label for="preco" class="form-label">Preço (R$)</label>
         <input type="number" name="preco" id="preco" class="form-control" step="0.01" min="0" required>
       </div>
 
       <div class="mt-4">
-        <button type="submit" class="btn btn-primary">Salvar Produto</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
         <a href="{{ url_for('nova_os') }}" class="btn btn-secondary ms-2">Voltar</a>
       </div>
     </form>

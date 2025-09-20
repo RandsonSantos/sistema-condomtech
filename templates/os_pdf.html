@@ -2,178 +2,182 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Ordem de Serviço #{{ os.id }}</title>
+  <title>O.S. #{{ os.id }}</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      font-size: 12px;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
       color: #333;
-      margin: 20px;
+      margin: 10px;
     }
 
-    .header {
-      border-bottom: 2px solid #444;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
+    .header, .footer {
       text-align: center;
-    }
-
-    .logo {
-      height: 60px;
       margin-bottom: 10px;
     }
 
+    .logo-container {
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+.logo {
+  height: 60px;
+}
+
     .empresa {
-      font-size: 16px;
       font-weight: bold;
-      color: #000;
-      margin-top: 5px;
+      font-size: 13px;
     }
 
     .contato {
-      font-size: 11px;
-      margin-top: 5px;
-      line-height: 1.4;
+      font-size: 10px;
+      color: #555;
     }
 
     .section-title {
-      font-size: 13px;
       font-weight: bold;
-      margin-top: 25px;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      color: #222;
+      font-size: 11px;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 2px;
+    }
+
+    .info, .box {
+      font-size: 10px;
+      margin-bottom: 5px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 5px;
+      table-layout: fixed;
     }
 
     th, td {
-      border: 1px solid #999;
+      border: 1px solid #ccc;
       padding: 6px;
       font-size: 11px;
+      word-wrap: break-word;
     }
 
-    th {
-      background-color: #f2f2f2;
-      text-align: left;
+    th.produto, td.produto {
+      width: 30%;
+    }
+
+    th.descricao, td.descricao {
+      width: 35%;
+    }
+
+    th.qtd, td.qtd {
+      width: 10%;
+      text-align: center;
+    }
+
+    th.unitario, td.unitario,
+    th.subtotal, td.subtotal {
+      width: 12.5%;
+      text-align: right;
     }
 
     .totais {
-      margin-top: 20px;
+      margin-top: 10px;
       width: 100%;
     }
 
     .totais td {
       border: none;
-      padding: 6px;
-      font-size: 12px;
-    }
-
-    .right {
+      padding: 4px;
+      font-size: 10px;
       text-align: right;
     }
 
-    .cliente-info {
-      line-height: 1.6;
-    }
-
-    .pagamento {
-      border: 1px solid #ccc;
-      padding: 8px;
-      margin-top: 15px;
-      font-size: 11px;
-    }
-
     .assinatura {
-      margin-top: 30px;
-      font-size: 11px;
+      margin-top: 20px;
+      font-size: 10px;
     }
 
     .footer {
-      margin-top: 40px;
-      font-size: 10px;
-      color: #555;
+      font-size: 9px;
+      color: #666;
       border-top: 1px solid #ccc;
-      padding-top: 10px;
-      text-align: center;
+      padding-top: 5px;
     }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <img src="{{ url_for('static', filename='logo1.png') }}" alt="Logo da empresa" class="logo">
+    <img src="{{ url_for('static', filename='logo1.png', _external=True) }}" alt="logo" class="logo">
     <div class="empresa">{{ empresa.nome }}</div>
     <div class="contato">
-      {{ empresa.endereco }}<br/>
-      Telefone: {{ empresa.telefone }} | Email: {{ empresa.email }}<br/>
-      CNPJ: {{ empresa.cnpj }} | Site: {{ empresa.site }}
+      {{ empresa.endereco }} — Tel: {{ empresa.telefone }} — Email: {{ empresa.email }}<br>
+      CNPJ: {{ empresa.cnpj }} — Site: 
+      <a href="{{ empresa.site if empresa.site.startswith('http') else 'http://' + empresa.site }}" target="_blank" style="color: #007bff; text-decoration: none;">
+        {{ empresa.site }}
+      </a>
     </div>
   </div>
-  <div class="section-title">Dados do Cliente</div>
-  <div class="info">
-    <strong>Cliente:</strong> {{ os.cliente.nome }} — 
-    <strong>Cidade:</strong> {{ os.cliente.cidade or '---' }} — 
-    <strong>Telefone:</strong> {{ os.cliente.telefone or '---' }}<br/>
   
-    <strong>CPF/CNPJ:</strong> {{ os.cliente.cpf_cnpj or '---' }} — 
-    <strong>Email:</strong> {{ os.cliente.email or '---' }} — 
+  
+  <div style="font-family: 'Segoe UI', sans-serif; font-size: 11px; margin-bottom: 10px;">
+    <div style="font-size: 14px; font-weight: bold; color: #222; margin-bottom: 2px;">
+      {{ os.cliente.nome }}
+    </div>
+    <div style="display: flex; flex-wrap: wrap; column-gap: 20px; row-gap: 4px;">
+      <div style="min-width: 180px;">
+        <strong>CPF/CNPJ:</strong> {{ os.cliente.cpf_cnpj or '---' }}
+      </div>
+      <div style="min-width: 180px;">
+        <strong>📞</strong> {{ os.cliente.telefone or '---' }}
+      </div>
+    </div>
   </div>
-  
-
-  <div class="section-title">Orçamento de Produtos/ Serviço >> Nº#{{ os.id }}</div>
+            
+  <div class="section-title">Orçamento Nº {{ os.id }}</div>
   <table>
     <thead>
       <tr>
-        <th>Produto/Serviço</th>
-        <th>Descrição</th>
-        <th>Qtd</th>
-        <th>Unitário</th>
-        <th>Subtotal</th>
+        <th class="produto">Produto</th>
+        <th class="descricao">Descrição</th>
+        <th class="qtd">Qtd</th>
+        <th class="unitario">Unitário</th>
+        <th class="subtotal">Subtotal</th>
       </tr>
     </thead>
     <tbody>
       {% for item in os.itens_os %}
       <tr>
-        <td>{{ item.produto.nome }}</td>
-        <td>{{ item.produto.descricao }}</td>
-        <td>{{ item.quantidade }}</td>
-        <td>R$ {{ '%.2f'|format(item.produto.preco) }}</td>
-        <td>R$ {{ '%.2f'|format(item.quantidade * item.produto.preco) }}</td>
+        <td class="produto">{{ item.produto.nome }}</td>
+        <td class="descricao">{{ item.produto.descricao }}</td>
+        <td class="qtd">{{ item.quantidade }}</td>
+        <td class="unitario">R$ {{ '%.2f'|format(item.produto.preco) }}</td>
+        <td class="subtotal">R$ {{ '%.2f'|format(item.quantidade * item.produto.preco) }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 
   <table class="totais">
-    <tr>
-      <td class="right"><strong>Subtotal:</strong> R$ {{ '%.2f'|format(subtotal) }}</td>
-    </tr>
-    <tr>
-      <td class="right"><strong>Desconto:</strong> R$ {{ '%.2f'|format(os.desconto or 0) }}</td>
-    </tr>
-    <tr>
-      <td class="right"><strong>Total:</strong> R$ {{ '%.2f'|format(total) }}</td>
-    </tr>
+    <tr><td><strong>Subtotal:</strong> R$ {{ '%.2f'|format(subtotal) }}</td></tr>
+    <tr><td><strong>Desconto:</strong> R$ {{ '%.2f'|format(os.desconto or 0) }}</td></tr>
+    <tr><td><strong>Total:</strong> R$ {{ '%.2f'|format(total) }}</td></tr>
   </table>
 
-  <div class="section-title">Forma de Pagamento</div>
-  <div class="pagamento">
-    {{ os.forma_pagamento or 'Pix, boleto, cartão de crédito ou débito' }}
-  </div>
+  <div class="section-title">Observações</div>
+  <div class="box">{{ os.observacoes or 'Nenhuma observação registrada.' }}</div>
+
+  <div class="section-title">Pagamento</div>
+  <div class="box">{{ os.forma_pagamento or 'Pix, boleto, cartão de crédito ou débito' }}</div>
 
   <div class="assinatura">
-    <p><strong>Assinatura do responsável:</strong> ____________________________________________</p>
+    <strong>Assinatura:</strong> ____________________________________________
   </div>
 
   <div class="footer">
-    <p>Este orçamento é válido por 15 dias a partir da data de emissão ({{ os.data_criacao.strftime('%d/%m/%Y') }}).</p>
-    <p>Após esse período, os valores podem sofrer alterações conforme tabela vigente.</p>
-    
+    Orçamento válido por 15 dias a partir de {{ os.data_criacao.strftime('%d/%m/%Y') }}. Valores sujeitos a alteração após esse período.
   </div>
 
 </body>

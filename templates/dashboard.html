@@ -2,92 +2,71 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Painel de Controle</h2>
+<h2 class="mb-4">📊 Painel de Controle</h2>
 
+<!-- Totais principais -->
 <div class="row text-center mb-4">
-  <div class="col-md-3">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h6>Total de O.S.</h6>
-        <h4>{{ total_os }}</h4>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="card bg-light border-0 shadow-sm">
+      <div class="card-body py-2">
+        <h6 class="mb-1">Total de O.S.</h6>
+        <h5 class="mb-0">{{ total_os }}</h5>
       </div>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h6>Clientes</h6>
-        <h4>{{ total_clientes }}</h4>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="card bg-light border-0 shadow-sm">
+      <div class="card-body py-2">
+        <h6 class="mb-1">Clientes</h6>
+        <h5 class="mb-0">{{ total_clientes }}</h5>
       </div>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h6>Valor Total</h6>
-        <h4>R$ {{ '%.2f'|format(valor_total) }}</h4>
+  <div class="col-6 col-md-3 mb-3">
+    <div class="card bg-light border-0 shadow-sm">
+      <div class="card-body py-2">
+        <h6 class="mb-1">Valor Total</h6>
+        <h5 class="mb-0">{{ valor_total|moeda }}</h5>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Valores por status -->
 <div class="row text-center mb-4">
-  <div class="col-md-4">
-    <a href="{{ url_for('listar_ordens_por_status', status='Aberta') }}" class="text-decoration-none text-dark">
-      <div class="card border-success shadow-sm">
-        <div class="card-body">
-          <h6>Ordens Abertas</h6>
-          <h4>R$ {{ '%.2f'|format(valor_aberto) }}</h4>
-        </div>
+  <div class="col-md-3 mb-3">
+    <div class="card border-success shadow-sm">
+      <div class="card-body">
+        <h6><i class="bi bi-folder2-open"></i> Abertas</h6>
+        <h5>{{ valor_aberto|moeda }}</h5>
       </div>
-    </a>
+    </div>
   </div>
-  <div class="col-md-4">
-    <a href="{{ url_for('listar_ordens_por_status', status='Pago') }}" class="text-decoration-none text-dark">
-      <div class="card border-primary shadow-sm">
-        <div class="card-body">
-          <h6>Ordens Pagas</h6>
-          <h4>R$ {{ '%.2f'|format(valor_pago) }}</h4>
-        </div>
+  <div class="col-md-3 mb-3">
+    <div class="card border-info shadow-sm">
+      <div class="card-body">
+        <h6><i class="bi bi-check2-circle"></i> Finalizadas</h6>
+        <h5>{{ valor_finalizado|moeda }}</h5>
       </div>
-    </a>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="card border-primary shadow-sm">
+      <div class="card-body">
+        <h6><i class="bi bi-currency-dollar"></i> Pagas</h6>
+        <h5>{{ valor_pago|moeda }}</h5>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="card border-danger shadow-sm">
+      <div class="card-body">
+        <h6><i class="bi bi-x-circle"></i> Canceladas</h6>
+        <h5>{{ valor_cancelada|moeda }}</h5>
+      </div>
+    </div>
   </div>
 </div>
 
-<form method="GET" action="{{ url_for('buscar_ordens') }}" class="mb-4">
-  <div class="input-group">
-    <input type="text" name="busca" class="form-control" placeholder="Buscar O.S. por cliente, status ou data...">
-    <button type="submit" class="btn btn-outline-primary">Buscar</button>
-  </div>
-</form>
-
-<h4 class="mt-4">Últimas Ordens do Mês</h4>
-{% if ultimas_ordens %}
-  <table class="table table-sm table-bordered">
-    <thead class="table-light">
-      <tr>
-        <th>ID</th>
-        <th>Cliente</th>
-        <th>Data</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for os in ultimas_ordens %}
-      <tr>
-        <td>#{{ os.id }}</td>
-        <td>{{ os.cliente.nome }}</td>
-        <td>{{ os.data_criacao.strftime('%d/%m/%Y') }}</td>
-        <td>{{ os.status }}</td>
-        <td>
-          <a href="{{ url_for('visualizar_os', os_id=os.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <div class="alert alert-info">Nenhuma ordem registrada neste mês.</div>
-{% endif %}
 {% endblock %}
+
