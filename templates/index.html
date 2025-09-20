@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}CondomTech - Bem-vindo{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+  <h1 class="display-4">👋 Bem-vindo ao <strong>CondomTech</strong></h1>
+  <p class="lead">Automação e tecnologia para gestão de condomínios</p>
+
+  <hr class="my-4">
+
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <p class="fs-5">
+        Nosso sistema ajuda síndicos e administradoras a controlar <br>
+        <strong>ordens de serviço, clientes e finanças</strong> de forma prática e segura.
+      </p>
+    </div>
+  </div>
+
+  <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg mt-4">
+    🚀 Acessar Sistema
+  </a>
+
+  <footer class="mt-5">
+    <p class="text-muted">&copy; 2025 CondomTech - Todos os direitos reservados</p>
+    <p>
+      <i class="bi bi-whatsapp"></i> (63) 98474-0162 |
+      <i class="bi bi-envelope"></i> contato@condomtech.com
+    </p>
+  </footer>
+</div>
+{% endblock %}
