@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Buscar Ordens de Serviço{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">🔍 Resultado da Busca de O.S.</h2>
+
+<form method="GET" action="{{ url_for('buscar_ordens') }}" class="mb-4" id="form-busca">
+  <div class="row g-2">
+    <div class="col-md-4">
+      <input type="text" name="busca" class="form-control" placeholder="Buscar por cliente ou data..." value="{{ termo }}">
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">Todos os Status</option>
+        {% for s in ['Aberta', 'Em andamento', 'Finalizada', 'Cancelada', 'Pago'] %}
+          <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="mes" class="form-select">
+        <option value="">Todos os Meses</option>
+        {% for m in range(1, 13) %}
+          <option value="{{ m }}" {% if mes == m|string %}selected{% endif %}>{{ '%02d' % m }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-outline-primary w-100">Buscar</button>
+      {% if termo or status or mes %}
+        <a href="{{ url_for('buscar_ordens') }}" class="btn btn-outline-secondary w-100">Limpar</a>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+{% if termo or status or mes %}
+  <p class="mt-2">Exibindo resultados para:
+    {% if termo %}<strong>{{ termo }}</strong>{% endif %}
+    {% if termo and (status or mes) %} e {% endif %}
+    {% if status %}<strong>Status: {{ status }}</strong>{% endif %}
+    {% if status and mes %} e {% endif %}
+    {% if mes %}<strong>Mês: {{ '%02d' % mes|int }}</strong>{% endif %}
+  </p>
+{% endif %}
+
+{% if ordens %}
+  {% set cliente_nome = ordens[0].cliente.nome if ordens[0].cliente else '' %}
+  {% if termo and cliente_nome and cliente_nome.lower() in termo.lower() %}
+    <!-- 💰 Totais por status -->
+    <div class="row text-center mb-4">
+      <div class="col-md-3">
+        <div class="card border-success shadow-sm">
+          <div class="card-body">
+            <h6>Abertas</h6>
+            <h5>{{ valor_aberto|moeda }}</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-primary shadow-sm">
+          <div class="card-body">
+            <h6>Pagas</h6>
+            <h5>{{ valor_pago|moeda }}</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-danger shadow-sm">
+          <div class="card-body">
+            <h6>Canceladas</h6>
+            <h5>{{ valor_cancelado|moeda }}</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-info shadow-sm">
+          <div class="card-body">
+            <h6>Finalizadas</h6>
+            <h5>{{ valor_finalizado|moeda }}</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- 📋 Tabela de resultados -->
+  <table class="table table-sm table-bordered mt-3">
+    <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Data</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for os in ordens %}
+      <tr>
+        <td>#{{ os.id }}</td>
+        <td>
+          <a href="#" class="cliente-link" data-nome="{{ os.cliente.nome }}">{{ os.cliente.nome }}</a>
+        </td>
+        <td>{{ os.data_criacao.strftime('%d/%m/%Y') }}</td>
+        <td>{{ os.status }}</td>
+        <td>
+          <a href="{{ url_for('visualizar_os', os_id=os.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if paginadas.has_next %}
+    <div class="text-center mt-3">
+      <a href="{{ url_for('buscar_ordens', busca=termo, status=status, mes=mes, page=paginadas.next_num) }}" class="btn btn-outline-primary">
+        Ver mais →
+      </a>
+    </div>
+  {% endif %}
+{% else %}
+  <div class="alert alert-warning mt-3">⚠️ Nenhuma ordem encontrada com os filtros informados.</div>
+{% endif %}
+
+<a href="{{ url_for('dashboard_principal') }}" class="btn btn-secondary mt-4">← Voltar ao Dashboard</a>
+
+<!-- ✅ Script para busca automática ao clicar no nome do cliente -->
+<script>
+  document.querySelectorAll('.cliente-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const nome = this.dataset.nome;
+      const inputBusca = document.querySelector('input[name="busca"]');
+      inputBusca.value = nome;
+      document.getElementById('form-busca').submit();
+    });
+  });
+</script>
+{% endblock %}
